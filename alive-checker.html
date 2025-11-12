@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alive Host Checker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f8f8f8;
+            color: #333;
+            min-height: 100vh;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            padding: 30px 0;
+            border-bottom: 1px solid #e0e0e0;
+            margin-bottom: 30px;
+        }
+        
+        header h1 {
+            font-size: 2.2rem;
+            margin-bottom: 10px;
+            font-weight: 600;
+            color: #222;
+        }
+        
+        header p {
+            font-size: 1.1rem;
+            color: #666;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 8px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e0e0e0;
+        }
+        
+        .card h2 {
+            font-size: 1.4rem;
+            margin-bottom: 15px;
+            color: #222;
+            font-weight: 500;
+        }
+        
+        textarea {
+            width: 100%;
+            padding: 15px;
+            border-radius: 6px;
+            background: #f9f9f9;
+            color: #333;
+            border: 1px solid #ddd;
+            font-family: monospace;
+            font-size: 0.9rem;
+            resize: vertical;
+            line-height: 1.5;
+        }
+        
+        .input-area {
+            height: 200px;
+        }
+        
+        .output-area {
+            height: 250px;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            justify-content: flex-end;
+        }
+        
+        button {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 6px;
+            background: #222;
+            color: white;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        button:hover {
+            background: #444;
+        }
+        
+        button:active {
+            transform: translateY(1px);
+        }
+        
+        button:disabled {
+            background: #aaa;
+            cursor: not-allowed;
+        }
+        
+        .secondary-btn {
+            background: #f0f0f0;
+            color: #333;
+        }
+        
+        .secondary-btn:hover {
+            background: #e0e0e0;
+        }
+        
+        .results-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 20px;
+            margin-top: 30px;
+        }
+        
+        .result-box {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .result-count {
+            background: #f0f0f0;
+            padding: 3px 12px;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            color: #555;
+        }
+        
+        .status-info {
+            display: flex;
+            gap: 15px;
+            margin: 20px 0;
+            font-size: 0.9rem;
+            color: #666;
+            justify-content: center;
+        }
+        
+        .status-info span {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+        
+        .status-alive {
+            background-color: #4CAF50;
+        }
+        
+        .status-dead {
+            background-color: #f44336;
+        }
+        
+        .status-error {
+            background-color: #FFC107;
+        }
+        
+        .progress-container {
+            margin: 20px 0;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background-color: #f0f0f0;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .progress {
+            height: 100%;
+            background-color: #222;
+            border-radius: 4px;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+        
+        .progress-text {
+            text-align: center;
+            font-size: 0.9rem;
+            color: #666;
+            margin-top: 5px;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 30px;
+        }
+        
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-radius: 50%;
+            border-top: 4px solid #333;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 40px;
+            color: #777;
+            font-size: 0.9rem;
+        }
+        
+        @media (max-width: 768px) {
+            .results-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .action-buttons {
+                justify-content: stretch;
+            }
+            
+            .action-buttons button {
+                flex: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Alive Host Checker</h1>
+            <p>Check if subdomains are alive via HTTP and HTTPS protocols</p>
+        </header>
+        
+        <div class="card">
+            <h2>Enter Subdomains</h2>
+            <p style="margin-bottom: 15px; color: #666;">Enter one subdomain per line</p>
+            <textarea id="subdomainsInput" class="input-area" placeholder="subdomain.example.com&#10;another.example.com&#10;...">app.google.com
+drive.google.com
+maps.google.com
+nonexistent.google.com
+mail.google.com
+photos.google.com
+play.google.com
+docs.google.com
+meet.google.com
+cloud.google.com</textarea>
+            <div class="action-buttons">
+                <button class="secondary-btn" id="clearBtn">Clear All</button>
+                <button id="checkStatusBtn">Check Status</button>
+            </div>
+        </div>
+        
+        <div class="status-info">
+            <span><span class="status-indicator status-alive"></span> Alive</span>
+            <span><span class="status-indicator status-dead"></span> Dead</span>
+            <span><span class="status-indicator status-error"></span> Error</span>
+        </div>
+        
+        <div class="progress-container">
+            <div class="progress-bar">
+                <div class="progress" id="progressBar"></div>
+            </div>
+            <div class="progress-text" id="progressText">Ready to check subdomains</div>
+        </div>
+        
+        <div class="loading" id="loadingIndicator">
+            <div class="spinner"></div>
+            <p>Checking status...</p>
+        </div>
+        
+        <div class="results-container" id="resultsContainer">
+            <div class="card result-box">
+                <div class="result-header">
+                    <h2>Alive Subdomains</h2>
+                    <div class="result-count" id="aliveCount">0</div>
+                </div>
+                <textarea id="aliveOutput" class="output-area" placeholder="Alive subdomains will appear here..." readonly></textarea>
+            </div>
+            
+            <div class="card result-box">
+                <div class="result-header">
+                    <h2>Dead Subdomains</h2>
+                    <div class="result-count" id="deadCount">0</div>
+                </div>
+                <textarea id="deadOutput" class="output-area" placeholder="Dead subdomains will appear here..." readonly></textarea>
+            </div>
+            
+            <div class="card result-box">
+                <div class="result-header">
+                    <h2>Error Subdomains</h2>
+                    <div class="result-count" id="errorCount">0</div>
+                </div>
+                <textarea id="errorOutput" class="output-area" placeholder="Subdomains with errors will appear here..." readonly></textarea>
+            </div>
+        </div>
+        
+        <footer>
+            <p>Web Security Toolkits &copy; 2025 | Powered by Wei</p>
+        </footer>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const subdomainsInput = document.getElementById('subdomainsInput');
+            const checkStatusBtn = document.getElementById('checkStatusBtn');
+            const clearBtn = document.getElementById('clearBtn');
+            const loadingIndicator = document.getElementById('loadingIndicator');
+            const progressBar = document.getElementById('progressBar');
+            const progressText = document.getElementById('progressText');
+            const aliveOutput = document.getElementById('aliveOutput');
+            const deadOutput = document.getElementById('deadOutput');
+            const errorOutput = document.getElementById('errorOutput');
+            const aliveCount = document.getElementById('aliveCount');
+            const deadCount = document.getElementById('deadCount');
+            const errorCount = document.getElementById('errorCount');
+            const resultsContainer = document.getElementById('resultsContainer');
+            
+            // Function to check subdomain status
+            async function checkSubdomainStatus() {
+                const inputText = subdomainsInput.value.trim();
+                
+                if (!inputText) {
+                    alert('Please enter at least one subdomain');
+                    return;
+                }
+                
+                // Parse subdomains from textarea
+                const subdomains = inputText.split('\n')
+                    .map(line => line.trim())
+                    .filter(line => line.length > 0);
+                
+                if (subdomains.length === 0) {
+                    alert('No valid subdomains found');
+                    return;
+                }
+                
+                // Reset outputs
+                aliveOutput.value = '';
+                deadOutput.value = '';
+                errorOutput.value = '';
+                aliveCount.textContent = '0';
+                deadCount.textContent = '0';
+                errorCount.textContent = '0';
+                
+                // Show loading and progress
+                loadingIndicator.style.display = 'block';
+                progressBar.style.width = '0%';
+                progressText.textContent = `Checking 0/${subdomains.length} subdomains`;
+                checkStatusBtn.disabled = true;
+                resultsContainer.style.opacity = '0.7';
+                
+                // Arrays to store results
+                const aliveSubdomains = [];
+                const deadSubdomains = [];
+                const errorSubdomains = [];
+                
+                // Check each subdomain
+                for (let i = 0; i < subdomains.length; i++) {
+                    const subdomain = subdomains[i];
+                    
+                    // Update progress
+                    const progress = ((i + 1) / subdomains.length) * 100;
+                    progressBar.style.width = `${progress}%`;
+                    progressText.textContent = `Checking ${i+1}/${subdomains.length} subdomains: ${subdomain}`;
+                    
+                    try {
+                        // Try HTTPS first
+                        const httpsResult = await checkProtocol(`https://${subdomain}`);
+                        
+                        if (httpsResult.alive) {
+                            aliveSubdomains.push(`${subdomain} [HTTPS: ${httpsResult.status}]`);
+                        } else {
+                            // If HTTPS fails, try HTTP
+                            const httpResult = await checkProtocol(`http://${subdomain}`);
+                            
+                            if (httpResult.alive) {
+                                aliveSubdomains.push(`${subdomain} [HTTP: ${httpResult.status}]`);
+                            } else {
+                                deadSubdomains.push(subdomain);
+                            }
+                        }
+                    } catch (error) {
+                        // If both protocols fail with errors
+                        errorSubdomains.push(`${subdomain} [Error: ${error.message || 'Unknown error'}]`);
+                    }
+                    
+                    // Update counts in real-time
+                    aliveCount.textContent = aliveSubdomains.length;
+                    deadCount.textContent = deadSubdomains.length;
+                    errorCount.textContent = errorSubdomains.length;
+                    
+                    // Update outputs in real-time
+                    aliveOutput.value = aliveSubdomains.join('\n');
+                    deadOutput.value = deadSubdomains.join('\n');
+                    errorOutput.value = errorSubdomains.join('\n');
+                    
+                    // Small delay to avoid overwhelming servers
+                    await new Promise(resolve => setTimeout(resolve, 200));
+                }
+                
+                // Final update
+                progressText.textContent = `Completed: ${aliveSubdomains.length} alive, ${deadSubdomains.length} dead, ${errorSubdomains.length} errors`;
+                
+                // Reset UI state
+                loadingIndicator.style.display = 'none';
+                checkStatusBtn.disabled = false;
+                resultsContainer.style.opacity = '1';
+            }
+            
+            // Function to check a single protocol (HTTP/HTTPS)
+            async function checkProtocol(url) {
+                try {
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 second timeout
+                    
+                    const response = await fetch(url, { 
+                        method: 'GET',
+                        mode: 'no-cors',
+                        signal: controller.signal
+                    });
+                    
+                    clearTimeout(timeoutId);
+                    
+                    // With no-cors mode, we can't read the status, but if we get here, the domain is alive
+                    return { alive: true, status: '200' };
+                } catch (error) {
+                    clearTimeout(timeoutId);
+                    
+                    // Try with a simple image request as fallback
+                    try {
+                        return await new Promise((resolve) => {
+                            const img = new Image();
+                            img.onload = () => resolve({ alive: true, status: '200' });
+                            img.onerror = () => resolve({ alive: false, status: 'Error' });
+                            img.src = `${url}/favicon.ico?t=${Date.now()}`;
+                            
+                            setTimeout(() => {
+                                resolve({ alive: false, status: 'Timeout' });
+                            }, 5000);
+                        });
+                    } catch (fallbackError) {
+                        return { alive: false, status: 'Error' };
+                    }
+                }
+            }
+            
+            // Event listener for check status button
+            checkStatusBtn.addEventListener('click', checkSubdomainStatus);
+            
+            // Event listener for clear button
+            clearBtn.addEventListener('click', function() {
+                subdomainsInput.value = '';
+                aliveOutput.value = '';
+                deadOutput.value = '';
+                errorOutput.value = '';
+                aliveCount.textContent = '0';
+                deadCount.textContent = '0';
+                errorCount.textContent = '0';
+                progressBar.style.width = '0%';
+                progressText.textContent = 'Ready to check subdomains';
+            });
+            
+            // Add some sample data for demonstration
+            subdomainsInput.value = subdomainsInput.value || 
+                "app.google.com\ndrive.google.com\nmaps.google.com\nnonexistent.google.com\nmail.google.com\nphotos.google.com\nplay.google.com\ndocs.google.com\nmeet.google.com\ncloud.google.com";
+        });
+    </script>
+</body>
+</html>

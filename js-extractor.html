@@ -1,0 +1,1303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JavaScript Endpoint Extractor - Web Recon Framework</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f8f8f8;
+            color: #333;
+            min-height: 100vh;
+            padding: 20px;
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            padding: 30px 0;
+            border-bottom: 1px solid #e0e0e0;
+            margin-bottom: 30px;
+        }
+        
+        header h1 {
+            font-size: 2.2rem;
+            margin-bottom: 10px;
+            font-weight: 600;
+            color: #222;
+        }
+        
+        header p {
+            font-size: 1.1rem;
+            color: #666;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 8px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e0e0e0;
+            max-width: 100%;
+        }
+        
+        .card h2 {
+            font-size: 1.4rem;
+            margin-bottom: 15px;
+            color: #222;
+            font-weight: 500;
+        }
+        
+        .card h3 {
+            font-size: 1.1rem;
+            margin-bottom: 10px;
+            color: #333;
+            font-weight: 500;
+        }
+        
+        textarea {
+            width: 100%;
+            padding: 15px;
+            border-radius: 6px;
+            background: #f9f9f9;
+            color: #333;
+            border: 1px solid #ddd;
+            font-family: monospace;
+            font-size: 0.9rem;
+            resize: vertical;
+            line-height: 1.5;
+            max-width: 100%;
+            box-sizing: border-box;
+        }
+        
+        .input-area {
+            height: 120px;
+        }
+        
+        .output-area {
+            height: 200px;
+        }
+        
+        .config-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 20px 0;
+        }
+        
+        .extraction-options {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin: 15px 0;
+        }
+        
+        .option-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .protocol-options {
+            display: flex;
+            gap: 15px;
+            margin: 15px 0;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        .protocol-btn {
+            padding: 8px 15px;
+            background: #f0f0f0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+        }
+        
+        .protocol-btn.active {
+            background: #222;
+            color: white;
+            border-color: #222;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            justify-content: flex-end;
+        }
+        
+        button {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 6px;
+            background: #222;
+            color: white;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        button:hover {
+            background: #444;
+        }
+        
+        button:active {
+            transform: translateY(1px);
+        }
+        
+        button:disabled {
+            background: #aaa;
+            cursor: not-allowed;
+        }
+        
+        .secondary-btn {
+            background: #f0f0f0;
+            color: #333;
+        }
+        
+        .secondary-btn:hover {
+            background: #e0e0e0;
+        }
+        
+        .warning-btn {
+            background: #ff9800;
+            color: white;
+        }
+        
+        .warning-btn:hover {
+            background: #f57c00;
+        }
+        
+        .results-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .result-box {
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
+        
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .result-count {
+            background: #f0f0f0;
+            padding: 3px 12px;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            color: #555;
+        }
+        
+        .progress-container {
+            margin: 20px 0;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 12px;
+            background-color: #f0f0f0;
+            border-radius: 6px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .progress {
+            height: 100%;
+            background: linear-gradient(90deg, #4CAF50, #8BC34A);
+            border-radius: 6px;
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+        
+        .progress-text {
+            text-align: center;
+            font-size: 0.9rem;
+            color: #666;
+            margin-top: 5px;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .stat-card {
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 6px;
+            text-align: center;
+            border-left: 4px solid #222;
+        }
+        
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #222;
+        }
+        
+        .stat-label {
+            font-size: 0.85rem;
+            color: #666;
+            margin-top: 5px;
+        }
+        
+        .results-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            table-layout: fixed;
+        }
+        
+        .results-table th,
+        .results-table td {
+            padding: 10px 12px;
+            text-align: left;
+            border-bottom: 1px solid #e0e0e0;
+            word-wrap: break-word;
+        }
+        
+        .results-table th {
+            background: #f5f5f5;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .endpoint-type {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+        
+        .type-critical {
+            background: #FFEBEE;
+            color: #C62828;
+            border: 1px solid #FFCDD2;
+        }
+        
+        .type-high {
+            background: #FFF3E0;
+            color: #EF6C00;
+            border: 1px solid #FFE0B2;
+        }
+        
+        .type-medium {
+            background: #E3F2FD;
+            color: #1565C0;
+            border: 1px solid #BBDEFB;
+        }
+        
+        .type-low {
+            background: #E8F5E9;
+            color: #2E7D32;
+            border: 1px solid #C8E6C9;
+        }
+        
+        .type-info {
+            background: #F5F5F5;
+            color: #757575;
+            border: 1px solid #E0E0E0;
+        }
+        
+        .usage-tag {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 0.7rem;
+            background: #e3f2fd;
+            color: #1565C0;
+            margin: 1px;
+        }
+        
+        .current-scan {
+            background: #e3f2fd;
+            padding: 10px 15px;
+            border-radius: 6px;
+            margin: 10px 0;
+            border-left: 4px solid #2196F3;
+        }
+        
+        .scan-history {
+            height: 150px;
+            overflow-y: auto;
+            margin-top: 10px;
+            font-size: 0.85rem;
+            border: 1px solid #f0f0f0;
+            padding: 10px;
+            background: #fafafa;
+            border-radius: 4px;
+        }
+        
+        .scan-item {
+            padding: 5px 0;
+            border-bottom: 1px solid #f0e0e0;
+        }
+        
+        .scan-success {
+            color: #4CAF50;
+        }
+        
+        .scan-failed {
+            color: #f44336;
+        }
+        
+        .scan-found {
+            color: #2196F3;
+            font-weight: 500;
+        }
+        
+        .endpoint-details {
+            font-size: 0.8rem;
+            color: #666;
+            margin-top: 3px;
+            word-break: break-all;
+        }
+        
+        .usage-guide {
+            background: #e8f5e9;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 20px 0;
+            border-left: 4px solid #4CAF50;
+        }
+        
+        .usage-guide h4 {
+            color: #2E7D32;
+            margin-bottom: 10px;
+        }
+        
+        .usage-guide ul {
+            margin-left: 20px;
+        }
+        
+        .usage-guide li {
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+        }
+        
+        .legend {
+            display: flex;
+            gap: 15px;
+            margin: 15px 0;
+            flex-wrap: wrap;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.8rem;
+        }
+        
+        .legend-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 2px;
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 40px;
+            color: #777;
+            font-size: 0.9rem;
+        }
+        
+        @media (max-width: 768px) {
+            .config-section {
+                grid-template-columns: 1fr;
+            }
+            
+            .results-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .stats-container {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .action-buttons {
+                justify-content: stretch;
+            }
+            
+            .action-buttons button {
+                flex: 1;
+            }
+            
+            .extraction-options {
+                grid-template-columns: 1fr;
+            }
+            
+            .protocol-options {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .results-table {
+                font-size: 0.8rem;
+            }
+            
+            .results-table th,
+            .results-table td {
+                padding: 8px 6px;
+            }
+            
+            .legend {
+                flex-direction: column;
+                gap: 8px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 10px;
+            }
+            
+            .card {
+                padding: 15px;
+            }
+            
+            header h1 {
+                font-size: 1.8rem;
+            }
+            
+            .stats-container {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+            
+            .stat-card {
+                padding: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>JavaScript Endpoint Extractor</h1>
+            <p>Discover API endpoints and hidden routes from JavaScript files</p>
+        </header>
+        
+        <div class="usage-guide">
+            <h4>🔍 How to Use These Results:</h4>
+            <ul>
+                <li><strong>Critical/High Priority:</strong> Test for authentication bypass, privilege escalation, and data exposure</li>
+                <li><strong>API Endpoints:</strong> Check for IDOR, injection vulnerabilities, and broken access control</li>
+                <li><strong>Authentication Endpoints:</strong> Test for weak authentication, session management issues</li>
+                <li><strong>File Endpoints:</strong> Look for path traversal, file upload vulnerabilities</li>
+                <li><strong>Admin Endpoints:</strong> Attempt unauthorized access to administrative functions</li>
+            </ul>
+        </div>
+        
+        <div class="card">
+            <h2>Target URLs</h2>
+            <p style="margin-bottom: 15px; color: #666;">Enter base URLs or domains (auto HTTP/HTTPS detection)</p>
+            <textarea id="targetsInput" class="input-area" placeholder="example.com&#10;subdomain.target.com&#10;...">localhost:5000
+httpbin.org
+jsonplaceholder.typicode.com</textarea>
+            
+            <div class="protocol-options">
+                <strong>Protocols:</strong>
+                <div class="protocol-btn active" data-protocol="both">Both HTTP & HTTPS</div>
+                <div class="protocol-btn" data-protocol="http">HTTP Only</div>
+                <div class="protocol-btn" data-protocol="https">HTTPS Only</div>
+            </div>
+            
+            <div class="config-section">
+                <div>
+                    <h3>Extraction Options</h3>
+                    <div class="extraction-options">
+                        <div class="option-group">
+                            <label>
+                                <input type="checkbox" id="extractUrls" checked>
+                                Extract URLs
+                            </label>
+                            <label>
+                                <input type="checkbox" id="extractApis" checked>
+                                Extract API Endpoints
+                            </label>
+                            <label>
+                                <input type="checkbox" id="extractParams" checked>
+                                Extract Parameters
+                            </label>
+                            <label>
+                                <input type="checkbox" id="extractAuth" checked>
+                                Extract Auth Endpoints
+                            </label>
+                        </div>
+                        <div class="option-group">
+                            <label>
+                                <input type="checkbox" id="crawlJsFiles" checked>
+                                Crawl JS Files
+                            </label>
+                            <label>
+                                <input type="checkbox" id="analyzeInlineJs" checked>
+                                Analyze Inline JS
+                            </label>
+                            <label>
+                                <input type="checkbox" id="followRedirects" checked>
+                                Follow Redirects
+                            </label>
+                            <label>
+                                <input type="checkbox" id="useProxy" checked>
+                                Use CORS Proxy
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-top: 15px;">
+                        <label>
+                            <input type="number" id="maxDepth" value="2" min="1" max="5" style="width: 80px; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                            Max Crawl Depth
+                        </label>
+                    </div>
+                </div>
+                
+                <div>
+                    <h3>Pattern Filters</h3>
+                    <textarea id="customPatterns" class="input-area" placeholder="Custom regex patterns (one per line)&#10;Example: /api/v[0-9]+/.*">/api/v[0-9]+/.*
+/auth/.*
+/oauth/.*
+/graphql
+/rest/.*
+/endpoint/.*
+/\.json$
+/\.ajax$
+/_next/.*</textarea>
+                    
+                    <div style="margin-top: 15px;">
+                        <label>
+                            <input type="number" id="timeoutInput" value="10000" min="3000" max="30000" style="width: 100px; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                            Timeout (ms)
+                        </label>
+                    </div>
+                    <div style="margin-top: 15px;">
+                        <label>
+                            <input type="number" id="concurrencyInput" value="3" min="1" max="10" style="width: 100px; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                            Max Concurrent
+                        </label>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="stats-container">
+                <div class="stat-card">
+                    <div class="stat-value" id="totalTargets">0</div>
+                    <div class="stat-label">Total Targets</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="jsFilesFound">0</div>
+                    <div class="stat-label">JS Files Found</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="endpointsFound">0</div>
+                    <div class="stat-label">Endpoints Found</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="elapsedTime">0s</div>
+                    <div class="stat-label">Elapsed Time</div>
+                </div>
+            </div>
+            
+            <div class="progress-container">
+                <div class="progress-bar">
+                    <div class="progress" id="progressBar"></div>
+                </div>
+                <div class="progress-text">
+                    <span id="progressStatus">Ready to scan</span>
+                    <span id="progressPercent">0%</span>
+                </div>
+            </div>
+            
+            <div id="currentScan" class="current-scan" style="display: none;">
+                <strong>Currently Scanning:</strong> <span id="currentTarget">-</span>
+            </div>
+            
+            <div class="action-buttons">
+                <button class="secondary-btn" id="clearBtn">Clear All</button>
+                <button class="warning-btn" id="cancelBtn" style="display: none;">Cancel Scan</button>
+                <button id="scanBtn">Extract Endpoints</button>
+            </div>
+        </div>
+        
+        <div class="card">
+            <h2>Extraction Results</h2>
+            
+            <div class="legend">
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #FFEBEE;"></div>
+                    <span>Critical - Immediate testing required</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #FFF3E0;"></div>
+                    <span>High - Security testing priority</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #E3F2FD;"></div>
+                    <span>Medium - API functionality testing</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #E8F5E9;"></div>
+                    <span>Low - General reconnaissance</span>
+                </div>
+            </div>
+            
+            <div class="results-container">
+                <div class="result-box">
+                    <div class="result-header">
+                        <h3>Discovered Endpoints</h3>
+                        <div class="result-count" id="endpointsCount">0</div>
+                    </div>
+                    <div style="overflow-x: auto;">
+                        <table class="results-table" id="resultsTable">
+                            <thead>
+                                <tr>
+                                    <th style="width: 40%;">Endpoint</th>
+                                    <th style="width: 15%;">Priority</th>
+                                    <th style="width: 20%;">Usage</th>
+                                    <th style="width: 25%;">Source</th>
+                                </tr>
+                            </thead>
+                            <tbody id="resultsBody">
+                                <!-- Results will appear here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <div class="result-box">
+                    <div class="result-header">
+                        <h3>Scan Log</h3>
+                        <div class="result-count" id="logCount">0</div>
+                    </div>
+                    <div class="scan-history" id="scanLog">
+                        <!-- Scan log will appear here -->
+                    </div>
+                    <textarea id="rawOutput" class="output-area" placeholder="Raw endpoints will appear here..." readonly style="margin-top: 10px;"></textarea>
+                </div>
+            </div>
+        </div>
+        
+        <footer>
+           <p>Web Security Toolkits &copy; 2025 | Powered by Wei</p>
+        </footer>
+    </div>
+
+    <script>
+        // CORS Proxy endpoints
+        const CORS_PROXIES = [
+            'https://cors-anywhere.herokuapp.com/',
+            'https://api.codetabs.com/v1/proxy?quest=',
+            'https://cors-proxy.htmldriven.com/?url='
+        ];
+
+        // Enhanced endpoint patterns with priority classification
+        const ENDPOINT_PATTERNS = {
+            critical: [
+                // Authentication & sensitive operations
+                /['"`](\/admin\/[^'"`\s]+)['"`]/g,
+                /['"`](\/administrator\/[^'"`\s]+)['"`]/g,
+                /['"`](\/password[^'"`\s]*)['"`]/g,
+                /['"`](\/reset-password[^'"`\s]*)['"`]/g,
+                /['"`](\/change-password[^'"`\s]*)['"`]/g,
+                /['"`](\/delete[^'"`\s]*)['"`]/g,
+                /['"`](\/remove[^'"`\s]*)['"`]/g,
+                /['"`](\/sudo[^'"`\s]*)['"`]/g,
+                /['"`](\/root[^'"`\s]*)['"`]/g
+            ],
+            high: [
+                // API endpoints with data operations
+                /['"`](\/api\/v?\d?\/[^'"`\s]+)['"`]/g,
+                /['"`](\/v\d\/[^'"`\s]+)['"`]/g,
+                /['"`](\/rest\/[^'"`\s]+)['"`]/g,
+                /['"`](\/graphql[^'"`\s]*)['"`]/g,
+                /['"`](\/auth\/[^'"`\s]+)['"`]/g,
+                /['"`](\/oauth\/[^'"`\s]+)['"`]/g,
+                /['"`](\/login[^'"`\s]*)['"`]/g,
+                /['"`](\/logout[^'"`\s]*)['"`]/g,
+                /['"`](\/signin[^'"`\s]*)['"`]/g,
+                /['"`](\/signup[^'"`\s]*)['"`]/g,
+                /['"`](\/register[^'"`\s]*)['"`]/g,
+                /['"`](\/users?\/[^'"`\s]+)['"`]/g,
+                /['"`](\/profile[^'"`\s]*)['"`]/g,
+                /['"`](\/account[^'"`\s]*)['"`]/g
+            ],
+            medium: [
+                // General API and resource endpoints
+                /['"`](\/endpoint\/[^'"`\s]+)['"`]/g,
+                /['"`](\/posts?\/[^'"`\s]+)['"`]/g,
+                /['"`](\/products?\/[^'"`\s]+)['"`]/g,
+                /['"`](\/files?\/[^'"`\s]+)['"`]/g,
+                /['"`](\/uploads?\/[^'"`\s]+)['"`]/g,
+                /['"`](\/images?\/[^'"`\s]+)['"`]/g,
+                /['"`](\/static\/[^'"`\s]+)['"`]/g,
+                /['"`](\/data\/[^'"`\s]+)['"`]/g,
+                /fetch\(['"`]([^'"`]+)['"`]/g,
+                /\.get\(['"`]([^'"`]+)['"`]/g,
+                /\.post\(['"`]([^'"`]+)['"`]/g,
+                /\.put\(['"`]([^'"`]+)['"`]/g,
+                /\.delete\(['"`]([^'"`]+)['"`]/g,
+                /axios\.(?:get|post|put|delete)\(['"`]([^'"`]+)['"`]/g,
+                /\.ajax\([^)]*url:\s*['"`]([^'"`]+)['"`]/g
+            ],
+            low: [
+                // General URLs and resources
+                /['"`]((?:https?:)?\/\/[^'"`\s]+)['"`]/g,
+                /['"`](\/[^'"`\s?]+\?[^'"`\s]+)['"`]/g,
+                /['"`](\/[^'"`\s]+\/[^'"`\s]+)['"`]/g,
+                /window\.location[^=]*=\s*['"`]([^'"`]+)['"`]/g,
+                /href\s*=\s*['"`]([^'"`]+)['"`]/gi
+            ]
+        };
+
+        // Usage descriptions for different endpoint types
+        const USAGE_GUIDE = {
+            critical: [
+                "Auth Bypass Testing",
+                "Privilege Escalation", 
+                "Data Exposure",
+                "Admin Access"
+            ],
+            high: [
+                "API Testing",
+                "IDOR Testing",
+                "Input Validation",
+                "Session Testing"
+            ],
+            medium: [
+                "Functionality Testing",
+                "Data Access",
+                "File Operations",
+                "API Exploration"
+            ],
+            low: [
+                "Reconnaissance",
+                "Info Gathering",
+                "Link Discovery"
+            ]
+        };
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const targetsInput = document.getElementById('targetsInput');
+            const customPatterns = document.getElementById('customPatterns');
+            const scanBtn = document.getElementById('scanBtn');
+            const cancelBtn = document.getElementById('cancelBtn');
+            const clearBtn = document.getElementById('clearBtn');
+            const progressBar = document.getElementById('progressBar');
+            const progressStatus = document.getElementById('progressStatus');
+            const progressPercent = document.getElementById('progressPercent');
+            const currentScan = document.getElementById('currentScan');
+            const currentTarget = document.getElementById('currentTarget');
+            const resultsBody = document.getElementById('resultsBody');
+            const scanLog = document.getElementById('scanLog');
+            const rawOutput = document.getElementById('rawOutput');
+            const totalTargets = document.getElementById('totalTargets');
+            const jsFilesFound = document.getElementById('jsFilesFound');
+            const endpointsFound = document.getElementById('endpointsFound');
+            const endpointsCount = document.getElementById('endpointsCount');
+            const elapsedTime = document.getElementById('elapsedTime');
+            const logCount = document.getElementById('logCount');
+            const protocolButtons = document.querySelectorAll('.protocol-btn');
+            
+            let scanController = null;
+            let scanStartTime = null;
+            let timerInterval = null;
+            let currentProxyIndex = 0;
+            let selectedProtocol = 'both';
+            let discoveredEndpoints = new Set();
+            let discoveredJsFiles = new Set();
+
+            // Protocol selection
+            protocolButtons.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    protocolButtons.forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    selectedProtocol = this.getAttribute('data-protocol');
+                    addLogEntry(`Protocol set to: ${selectedProtocol}`);
+                });
+            });
+
+            // Function to get next CORS proxy
+            function getNextProxy() {
+                const proxy = CORS_PROXIES[currentProxyIndex];
+                currentProxyIndex = (currentProxyIndex + 1) % CORS_PROXIES.length;
+                return proxy;
+            }
+
+            // Function to add log entry
+            function addLogEntry(message, type = 'info') {
+                const logEntry = document.createElement('div');
+                logEntry.className = `scan-item scan-${type}`;
+                logEntry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+                scanLog.appendChild(logEntry);
+                scanLog.scrollTop = scanLog.scrollHeight;
+                logCount.textContent = parseInt(logCount.textContent) + 1;
+            }
+
+            // Function to update timer
+            function updateTimer() {
+                if (scanStartTime) {
+                    const seconds = Math.floor((Date.now() - scanStartTime) / 1000);
+                    elapsedTime.textContent = `${seconds}s`;
+                }
+            }
+
+            // Function to normalize target input with protocol consideration
+            function normalizeTargets(input) {
+                const targets = input.split('\n')
+                    .map(line => line.trim())
+                    .filter(line => line.length > 0);
+
+                const normalized = [];
+                
+                targets.forEach(target => {
+                    // If target already has protocol, use it as is
+                    if (target.startsWith('http://') || target.startsWith('https://')) {
+                        normalized.push(target);
+                        return;
+                    }
+
+                    // Add protocols based on selection
+                    if (selectedProtocol === 'both' || selectedProtocol === 'http') {
+                        normalized.push('http://' + target);
+                    }
+                    if (selectedProtocol === 'both' || selectedProtocol === 'https') {
+                        normalized.push('https://' + target);
+                    }
+                });
+
+                return normalized;
+            }
+
+            // Function to make CORS-friendly request
+            async function makeRequest(url, timeout, signal) {
+                const useProxy = document.getElementById('useProxy').checked;
+                
+                let targetUrl = url;
+                if (useProxy) {
+                    const proxy = getNextProxy();
+                    targetUrl = proxy + encodeURIComponent(url);
+                }
+
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), timeout);
+                
+                // Combine signals
+                if (signal) {
+                    signal.addEventListener('abort', () => controller.abort());
+                }
+
+                try {
+                    const response = await fetch(targetUrl, {
+                        method: 'GET',
+                        signal: controller.signal,
+                        headers: {
+                            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+                        }
+                    });
+
+                    clearTimeout(timeoutId);
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
+
+                    return {
+                        success: true,
+                        content: await response.text(),
+                        url: response.url,
+                        headers: response.headers
+                    };
+                } catch (error) {
+                    clearTimeout(timeoutId);
+                    throw error;
+                }
+            }
+
+            // Function to extract endpoints from JavaScript content
+            function extractEndpointsFromJs(content, sourceUrl) {
+                const endpoints = new Set();
+                const customPatternsText = customPatterns.value.split('\n')
+                    .map(line => line.trim())
+                    .filter(line => line.length > 0);
+
+                // Add custom patterns (treated as high priority)
+                customPatternsText.forEach(pattern => {
+                    try {
+                        const regex = new RegExp(pattern, 'g');
+                        let match;
+                        while ((match = regex.exec(content)) !== null) {
+                            if (match[1]) {
+                                endpoints.add({
+                                    endpoint: match[1],
+                                    priority: 'high',
+                                    source: sourceUrl,
+                                    pattern: pattern,
+                                    usage: ['Custom Pattern Match']
+                                });
+                            }
+                        }
+                    } catch (e) {
+                        addLogEntry(`Invalid regex pattern: ${pattern}`, 'failed');
+                    }
+                });
+
+                // Extract using predefined patterns with priority levels
+                Object.keys(ENDPOINT_PATTERNS).forEach(priority => {
+                    if (!shouldExtractPriority(priority)) return;
+
+                    ENDPOINT_PATTERNS[priority].forEach(pattern => {
+                        let match;
+                        while ((match = pattern.exec(content)) !== null) {
+                            if (match[1] && isValidEndpoint(match[1])) {
+                                endpoints.add({
+                                    endpoint: match[1],
+                                    priority: priority,
+                                    source: sourceUrl,
+                                    pattern: pattern.source,
+                                    usage: USAGE_GUIDE[priority] || ['General Testing']
+                                });
+                            }
+                        }
+                    });
+                });
+
+                return Array.from(endpoints);
+            }
+
+            // Function to check if we should extract a priority level
+            function shouldExtractPriority(priority) {
+                switch (priority) {
+                    case 'critical': return document.getElementById('extractAuth').checked;
+                    case 'high': return document.getElementById('extractApis').checked || document.getElementById('extractAuth').checked;
+                    case 'medium': return document.getElementById('extractApis').checked;
+                    case 'low': return document.getElementById('extractUrls').checked;
+                    default: return true;
+                }
+            }
+
+            // Function to validate if an endpoint is worth keeping
+            function isValidEndpoint(endpoint) {
+                // Skip common false positives
+                const falsePositives = [
+                    'http://www.w3.org',
+                    'https://www.w3.org',
+                    'javascript:',
+                    'mailto:',
+                    'tel:',
+                    'data:',
+                    'blob:',
+                    '#',
+                    'about:'
+                ];
+
+                if (falsePositives.some(fp => endpoint.startsWith(fp))) {
+                    return false;
+                }
+
+                // Must be a reasonable length
+                if (endpoint.length < 3 || endpoint.length > 500) {
+                    return false;
+                }
+
+                return true;
+            }
+
+            // Function to find JavaScript files in HTML
+            function findJsFilesInHtml(html, baseUrl) {
+                const jsFiles = new Set();
+                const patterns = [
+                    /<script[^>]*src=['"]([^'"]+\.js(?:\?[^'"]*)?)['"][^>]*>/gi,
+                    /<script[^>]*src=['"]([^'"]+)['"][^>]*>/gi
+                ];
+
+                patterns.forEach(pattern => {
+                    let match;
+                    while ((match = pattern.exec(html)) !== null) {
+                        let jsUrl = match[1];
+                        
+                        // Convert relative URLs to absolute
+                        if (jsUrl.startsWith('//')) {
+                            jsUrl = 'https:' + jsUrl;
+                        } else if (jsUrl.startsWith('/')) {
+                            const urlObj = new URL(baseUrl);
+                            jsUrl = urlObj.origin + jsUrl;
+                        } else if (!jsUrl.startsWith('http')) {
+                            jsUrl = baseUrl + '/' + jsUrl;
+                        }
+
+                        if (jsUrl.endsWith('.js') || jsUrl.includes('.js?')) {
+                            jsFiles.add(jsUrl);
+                        }
+                    }
+                });
+
+                return Array.from(jsFiles);
+            }
+
+            // Function to extract inline JavaScript from HTML
+            function extractInlineJsFromHtml(html, sourceUrl) {
+                const inlineScripts = [];
+                const scriptPattern = /<script[^>]*>([\s\S]*?)<\/script>/gi;
+                
+                let match;
+                while ((match = scriptPattern.exec(html)) !== null) {
+                    if (match[1] && !match[0].includes('src=')) {
+                        inlineScripts.push({
+                            content: match[1],
+                            source: sourceUrl + '#inline',
+                            type: 'inline'
+                        });
+                    }
+                }
+
+                return inlineScripts;
+            }
+
+            // Function to start endpoint extraction
+            async function startExtraction() {
+                const targetsText = targetsInput.value.trim();
+                
+                if (!targetsText) {
+                    alert('Please enter at least one target');
+                    return;
+                }
+
+                // Parse and normalize targets
+                const targets = normalizeTargets(targetsText);
+                if (targets.length === 0) {
+                    alert('No valid targets found');
+                    return;
+                }
+
+                // Reset state
+                scanController = new AbortController();
+                resultsBody.innerHTML = '';
+                scanLog.innerHTML = '';
+                rawOutput.value = '';
+                endpointsCount.textContent = '0';
+                logCount.textContent = '0';
+                jsFilesFound.textContent = '0';
+                endpointsFound.textContent = '0';
+                elapsedTime.textContent = '0s';
+                discoveredEndpoints.clear();
+                discoveredJsFiles.clear();
+                currentProxyIndex = 0;
+
+                totalTargets.textContent = targets.length.toString();
+
+                // Show current scan and cancel button
+                currentScan.style.display = 'block';
+                cancelBtn.style.display = 'block';
+                scanBtn.disabled = true;
+
+                // Start timer
+                scanStartTime = Date.now();
+                timerInterval = setInterval(updateTimer, 1000);
+
+                const timeout = parseInt(document.getElementById('timeoutInput').value) || 10000;
+                const concurrency = parseInt(document.getElementById('concurrencyInput').value) || 3;
+                const maxDepth = parseInt(document.getElementById('maxDepth').value) || 2;
+
+                addLogEntry(`Starting endpoint extraction on ${targets.length} targets`);
+                addLogEntry(`Protocol: ${selectedProtocol}, Max depth: ${maxDepth}, Timeout: ${timeout}ms`);
+
+                try {
+                    let completedTargetCount = 0;
+
+                    // Process each target
+                    for (const target of targets) {
+                        if (scanController.signal.aborted) break;
+                        
+                        currentTarget.textContent = target;
+                        addLogEntry(`Processing target: ${target}`);
+                        
+                        await crawlTarget(target, maxDepth, timeout, scanController.signal);
+                        
+                        completedTargetCount++;
+                        const progress = (completedTargetCount / targets.length) * 100;
+                        progressBar.style.width = `${progress}%`;
+                        progressPercent.textContent = `${Math.round(progress)}%`;
+                        progressStatus.textContent = `Scanning... (${completedTargetCount}/${targets.length})`;
+                    }
+
+                    if (!scanController.signal.aborted) {
+                        addLogEntry(`Extraction completed! Found ${discoveredEndpoints.size} endpoints from ${discoveredJsFiles.size} JS files`, 'success');
+                        progressStatus.textContent = `Completed - ${discoveredEndpoints.size} endpoints found`;
+                    }
+
+                } catch (error) {
+                    if (error.name !== 'AbortError') {
+                        addLogEntry(`Extraction error: ${error.message}`, 'failed');
+                    }
+                } finally {
+                    // Cleanup
+                    clearInterval(timerInterval);
+                    scanBtn.disabled = false;
+                    cancelBtn.style.display = 'none';
+                    currentScan.style.display = 'none';
+                    scanController = null;
+                }
+            }
+
+            // Function to crawl a target and extract endpoints
+            async function crawlTarget(url, maxDepth, timeout, signal, currentDepth = 0) {
+                if (currentDepth > maxDepth || signal.aborted) return;
+
+                try {
+                    addLogEntry(`Crawling: ${url} (depth ${currentDepth})`);
+                    
+                    const result = await makeRequest(url, timeout, signal);
+                    
+                    // Find JS files in HTML
+                    const jsFiles = findJsFilesInHtml(result.content, url);
+                    addLogEntry(`Found ${jsFiles.length} JS files in ${url}`, 'found');
+
+                    // Extract inline JS
+                    if (document.getElementById('analyzeInlineJs').checked) {
+                        const inlineScripts = extractInlineJsFromHtml(result.content, url);
+                        inlineScripts.forEach(script => {
+                            const endpoints = extractEndpointsFromJs(script.content, script.source);
+                            endpoints.forEach(endpoint => addEndpointToResults(endpoint));
+                        });
+                    }
+
+                    // Process external JS files
+                    if (document.getElementById('crawlJsFiles').checked) {
+                        for (const jsFile of jsFiles) {
+                            if (signal.aborted) break;
+                            if (!discoveredJsFiles.has(jsFile)) {
+                                discoveredJsFiles.add(jsFile);
+                                jsFilesFound.textContent = discoveredJsFiles.size.toString();
+                                
+                                try {
+                                    const jsResult = await makeRequest(jsFile, timeout, signal);
+                                    const endpoints = extractEndpointsFromJs(jsResult.content, jsFile);
+                                    endpoints.forEach(endpoint => addEndpointToResults(endpoint));
+                                    addLogEntry(`Extracted ${endpoints.length} endpoints from ${jsFile}`, 'found');
+                                } catch (error) {
+                                    addLogEntry(`Failed to fetch JS file: ${jsFile}`, 'failed');
+                                }
+                            }
+                        }
+                    }
+
+                } catch (error) {
+                    addLogEntry(`Failed to crawl ${url}: ${error.message}`, 'failed');
+                }
+            }
+
+            // Function to add endpoint to results table
+            function addEndpointToResults(endpointData) {
+                const endpointKey = `${endpointData.endpoint}|${endpointData.source}`;
+                if (discoveredEndpoints.has(endpointKey)) return;
+
+                discoveredEndpoints.add(endpointKey);
+                endpointsFound.textContent = discoveredEndpoints.size.toString();
+                endpointsCount.textContent = discoveredEndpoints.size.toString();
+
+                const row = document.createElement('tr');
+                
+                // Determine priority class
+                const priorityClass = `type-${endpointData.priority}`;
+                const priorityText = endpointData.priority.charAt(0).toUpperCase() + endpointData.priority.slice(1);
+
+                // Create usage tags
+                const usageTags = endpointData.usage ? 
+                    endpointData.usage.slice(0, 2).map(use => 
+                        `<span class="usage-tag">${use}</span>`
+                    ).join('') : '';
+
+                row.innerHTML = `
+                    <td>
+                        <div><strong>${endpointData.endpoint}</strong></div>
+                        <div class="endpoint-details">From: ${endpointData.source}</div>
+                    </td>
+                    <td><span class="endpoint-type ${priorityClass}">${priorityText}</span></td>
+                    <td>${usageTags}</td>
+                    <td>${endpointData.source.includes('#inline') ? 'Inline JS' : 'External JS'}</td>
+                `;
+                
+                resultsBody.appendChild(row);
+                
+                // Add to raw output with priority indicator
+                rawOutput.value += `[${priorityText.toUpperCase()}] ${endpointData.endpoint}\n`;
+                rawOutput.value += `  Source: ${endpointData.source}\n`;
+                rawOutput.value += `  Usage: ${endpointData.usage ? endpointData.usage.join(', ') : 'General testing'}\n\n`;
+                rawOutput.scrollTop = rawOutput.scrollHeight;
+            }
+
+            // Event listeners
+            scanBtn.addEventListener('click', startExtraction);
+
+            cancelBtn.addEventListener('click', function() {
+                if (scanController) {
+                    scanController.abort();
+                    addLogEntry('Cancelling extraction...', 'failed');
+                }
+            });
+
+            clearBtn.addEventListener('click', function() {
+                if (scanController) {
+                    scanController.abort();
+                }
+
+                targetsInput.value = '';
+                customPatterns.value = '/api/v[0-9]+/.*\n/auth/.*\n/oauth/.*\n/graphql\n/rest/.*\n/endpoint/.*\n/\\.json$\n/\\.ajax$\n/_next/.*';
+                resultsBody.innerHTML = '';
+                scanLog.innerHTML = '';
+                rawOutput.value = '';
+                progressBar.style.width = '0%';
+                progressStatus.textContent = 'Ready to scan';
+                progressPercent.textContent = '0%';
+                totalTargets.textContent = '0';
+                jsFilesFound.textContent = '0';
+                endpointsFound.textContent = '0';
+                endpointsCount.textContent = '0';
+                elapsedTime.textContent = '0s';
+                logCount.textContent = '0';
+                currentScan.style.display = 'none';
+
+                if (timerInterval) {
+                    clearInterval(timerInterval);
+                    timerInterval = null;
+                }
+            });
+
+            // Initialize with common patterns
+            customPatterns.value = '/api/v[0-9]+/.*\n/auth/.*\n/oauth/.*\n/graphql\n/rest/.*\n/endpoint/.*\n/\\.json$\n/\\.ajax$\n/_next/.*';
+        });
+    </script>
+</body>
+</html>

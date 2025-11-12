@@ -1,0 +1,941 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Port Scanner - Web Recon Framework</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f8f8f8;
+            color: #333;
+            min-height: 100vh;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            padding: 30px 0;
+            border-bottom: 1px solid #e0e0e0;
+            margin-bottom: 30px;
+        }
+        
+        header h1 {
+            font-size: 2.2rem;
+            margin-bottom: 10px;
+            font-weight: 600;
+            color: #222;
+        }
+        
+        header p {
+            font-size: 1.1rem;
+            color: #666;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 8px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e0e0e0;
+        }
+        
+        .card h2 {
+            font-size: 1.4rem;
+            margin-bottom: 15px;
+            color: #222;
+            font-weight: 500;
+        }
+        
+        .card h3 {
+            font-size: 1.1rem;
+            margin-bottom: 10px;
+            color: #333;
+            font-weight: 500;
+        }
+        
+        textarea {
+            width: 100%;
+            padding: 15px;
+            border-radius: 6px;
+            background: #f9f9f9;
+            color: #333;
+            border: 1px solid #ddd;
+            font-family: monospace;
+            font-size: 0.9rem;
+            resize: vertical;
+            line-height: 1.5;
+        }
+        
+        .input-area {
+            height: 150px;
+        }
+        
+        .output-area {
+            height: 300px;
+        }
+        
+        .config-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 20px 0;
+        }
+        
+        .port-presets {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin: 15px 0;
+        }
+        
+        .preset-btn {
+            padding: 8px 15px;
+            background: #f0f0f0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+        }
+        
+        .preset-btn:hover {
+            background: #e0e0e0;
+        }
+        
+        .preset-btn.active {
+            background: #222;
+            color: white;
+            border-color: #222;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            justify-content: flex-end;
+        }
+        
+        button {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 6px;
+            background: #222;
+            color: white;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        button:hover {
+            background: #444;
+        }
+        
+        button:active {
+            transform: translateY(1px);
+        }
+        
+        button:disabled {
+            background: #aaa;
+            cursor: not-allowed;
+        }
+        
+        .secondary-btn {
+            background: #f0f0f0;
+            color: #333;
+        }
+        
+        .secondary-btn:hover {
+            background: #e0e0e0;
+        }
+        
+        .warning-btn {
+            background: #ff9800;
+            color: white;
+        }
+        
+        .warning-btn:hover {
+            background: #f57c00;
+        }
+        
+        .results-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .result-box {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .result-count {
+            background: #f0f0f0;
+            padding: 3px 12px;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            color: #555;
+        }
+        
+        .progress-container {
+            margin: 20px 0;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 12px;
+            background-color: #f0f0f0;
+            border-radius: 6px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .progress {
+            height: 100%;
+            background: linear-gradient(90deg, #4CAF50, #8BC34A);
+            border-radius: 6px;
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+        
+        .progress-text {
+            text-align: center;
+            font-size: 0.9rem;
+            color: #666;
+            margin-top: 5px;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .stat-card {
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 6px;
+            text-align: center;
+            border-left: 4px solid #222;
+        }
+        
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #222;
+        }
+        
+        .stat-label {
+            font-size: 0.85rem;
+            color: #666;
+            margin-top: 5px;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 30px;
+        }
+        
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-radius: 50%;
+            border-top: 4px solid #333;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .service-info {
+            font-size: 0.8rem;
+            color: #666;
+            margin-left: 5px;
+        }
+        
+        .current-scan {
+            background: #e3f2fd;
+            padding: 10px 15px;
+            border-radius: 6px;
+            margin: 10px 0;
+            border-left: 4px solid #2196F3;
+        }
+        
+        .scan-history {
+            max-height: 200px;
+            overflow-y: auto;
+            margin-top: 10px;
+            font-size: 0.85rem;
+        }
+        
+        .scan-item {
+            padding: 5px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .scan-success {
+            color: #4CAF50;
+        }
+        
+        .scan-failed {
+            color: #f44336;
+        }
+        
+        .scan-skipped {
+            color: #FF9800;
+        }
+        
+        .scan-http {
+            color: #2196F3;
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 40px;
+            color: #777;
+            font-size: 0.9rem;
+        }
+        
+        @media (max-width: 768px) {
+            .config-section {
+                grid-template-columns: 1fr;
+            }
+            
+            .results-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .stats-container {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .action-buttons {
+                justify-content: stretch;
+            }
+            
+            .action-buttons button {
+                flex: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Port Scanner</h1>
+            <p>Discover open ports on your target subdomains</p>
+        </header>
+        
+        <div class="card">
+            <h2>Target Subdomains</h2>
+            <p style="margin-bottom: 15px; color: #666;">Enter one subdomain per line (IP addresses also accepted)</p>
+            <textarea id="targetsInput" class="input-area" placeholder="subdomain.example.com&#10;192.168.1.1&#10;...">localhost
+127.0.0.1
+google.com</textarea>
+            
+            <div class="config-section">
+                <div>
+                    <h3>Port Configuration</h3>
+                    <textarea id="portsInput" placeholder="80,443,22,21,25,53,110,995,143,993,587,465,8080,8443,3306,5432,27017">80,443,3000,5000,8000,8080,8443,9000</textarea>
+                    
+                    <div class="port-presets">
+                        <div class="preset-btn active" data-ports="80,443,22,21,25,53,110,995,143,993,587,465,8080,8443,3306,5432,27017">Common</div>
+                        <div class="preset-btn" data-ports="80,443,3000,5000,8000,8080,8443,9000">Web Development</div>
+                        <div class="preset-btn" data-ports="21,22,23,25,53,110,143,993,995,587,465">Mail & Remote</div>
+                        <div class="preset-btn" data-ports="80,443,8080">Quick Test</div>
+                    </div>
+                </div>
+                
+                <div>
+                    <h3>Scan Options</h3>
+                    <div style="margin-bottom: 15px;">
+                        <label>
+                            <input type="number" id="timeoutInput" value="3000" min="1000" max="10000" style="width: 100px; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                            Timeout (ms)
+                        </label>
+                    </div>
+                    <div style="margin-bottom: 15px;">
+                        <label>
+                            <input type="number" id="concurrencyInput" value="3" min="1" max="10" style="width: 100px; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                            Max Concurrent
+                        </label>
+                    </div>
+                    <div>
+                        <label>
+                            <input type="checkbox" id="advancedScan" checked>
+                            Advanced HTTP Detection
+                        </label>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="stats-container">
+                <div class="stat-card">
+                    <div class="stat-value" id="totalScans">0</div>
+                    <div class="stat-label">Total Scans</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="completedScans">0</div>
+                    <div class="stat-label">Completed</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="openPortsCount">0</div>
+                    <div class="stat-label">Open Ports</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="elapsedTime">0s</div>
+                    <div class="stat-label">Elapsed Time</div>
+                </div>
+            </div>
+            
+            <div class="progress-container">
+                <div class="progress-bar">
+                    <div class="progress" id="progressBar"></div>
+                </div>
+                <div class="progress-text">
+                    <span id="progressStatus">Ready to scan</span>
+                    <span id="progressPercent">0%</span>
+                </div>
+            </div>
+            
+            <div id="currentScan" class="current-scan" style="display: none;">
+                <strong>Currently Scanning:</strong> <span id="currentTarget">-</span>
+            </div>
+            
+            <div class="action-buttons">
+                <button class="secondary-btn" id="clearBtn">Clear All</button>
+                <button class="warning-btn" id="cancelBtn" style="display: none;">Cancel Scan</button>
+                <button id="scanBtn">Start Port Scan</button>
+            </div>
+        </div>
+        
+        <div class="card">
+            <h2>Scan Results</h2>
+            <div class="results-container">
+                <div class="result-box">
+                    <div class="result-header">
+                        <h3>Open Ports</h3>
+                        <div class="result-count" id="openCount">0</div>
+                    </div>
+                    <textarea id="openPortsOutput" class="output-area" placeholder="Open ports will appear here..." readonly></textarea>
+                </div>
+                
+                <div class="result-box">
+                    <div class="result-header">
+                        <h3>Scan Log</h3>
+                        <div class="result-count" id="logCount">0</div>
+                    </div>
+                    <div class="scan-history" id="scanLog">
+                        <!-- Scan log will appear here -->
+                    </div>
+                    <textarea id="resultsOutput" class="output-area" placeholder="Detailed results will appear here..." readonly style="margin-top: 10px; height: 200px;"></textarea>
+                </div>
+            </div>
+        </div>
+        
+        <footer>
+            <p>Web Security Toolkits &copy; 2025 | Powered by Wei</p>
+        </footer>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const targetsInput = document.getElementById('targetsInput');
+            const portsInput = document.getElementById('portsInput');
+            const timeoutInput = document.getElementById('timeoutInput');
+            const concurrencyInput = document.getElementById('concurrencyInput');
+            const advancedScan = document.getElementById('advancedScan');
+            const scanBtn = document.getElementById('scanBtn');
+            const cancelBtn = document.getElementById('cancelBtn');
+            const clearBtn = document.getElementById('clearBtn');
+            const progressBar = document.getElementById('progressBar');
+            const progressStatus = document.getElementById('progressStatus');
+            const progressPercent = document.getElementById('progressPercent');
+            const currentScan = document.getElementById('currentScan');
+            const currentTarget = document.getElementById('currentTarget');
+            const openPortsOutput = document.getElementById('openPortsOutput');
+            const resultsOutput = document.getElementById('resultsOutput');
+            const openCount = document.getElementById('openCount');
+            const scanLog = document.getElementById('scanLog');
+            const logCount = document.getElementById('logCount');
+            const totalScans = document.getElementById('totalScans');
+            const completedScans = document.getElementById('completedScans');
+            const openPortsCount = document.getElementById('openPortsCount');
+            const elapsedTime = document.getElementById('elapsedTime');
+            const presetButtons = document.querySelectorAll('.preset-btn');
+            
+            // Common port services mapping
+            const portServices = {
+                21: 'FTP',
+                22: 'SSH',
+                23: 'Telnet',
+                25: 'SMTP',
+                53: 'DNS',
+                80: 'HTTP',
+                110: 'POP3',
+                143: 'IMAP',
+                443: 'HTTPS',
+                465: 'SMTPS',
+                587: 'SMTP Submission',
+                993: 'IMAPS',
+                995: 'POP3S',
+                1433: 'MSSQL',
+                1521: 'Oracle',
+                2049: 'NFS',
+                3000: 'Node.js',
+                3306: 'MySQL',
+                3389: 'RDP',
+                5000: 'Flask/Debug',
+                5432: 'PostgreSQL',
+                5900: 'VNC',
+                6379: 'Redis',
+                8000: 'Django/Debug',
+                8080: 'HTTP-Alt',
+                8443: 'HTTPS-Alt',
+                9000: 'Jenkins'
+            };
+            
+            let scanController = null;
+            let scanStartTime = null;
+            let timerInterval = null;
+            
+            // Port preset buttons
+            presetButtons.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    presetButtons.forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    portsInput.value = this.getAttribute('data-ports');
+                });
+            });
+            
+            // Function to parse port ranges
+            function parsePorts(portsText) {
+                const ports = new Set();
+                const parts = portsText.split(',');
+                
+                for (const part of parts) {
+                    const trimmed = part.trim();
+                    if (trimmed.includes('-')) {
+                        const [start, end] = trimmed.split('-').map(p => parseInt(p.trim()));
+                        for (let i = start; i <= end; i++) {
+                            if (i >= 1 && i <= 65535) {
+                                ports.add(i);
+                            }
+                        }
+                    } else {
+                        const port = parseInt(trimmed);
+                        if (port >= 1 && port <= 65535) {
+                            ports.add(port);
+                        }
+                    }
+                }
+                
+                return Array.from(ports).sort((a, b) => a - b);
+            }
+            
+            // Function to update timer
+            function updateTimer() {
+                if (scanStartTime) {
+                    const seconds = Math.floor((Date.now() - scanStartTime) / 1000);
+                    elapsedTime.textContent = `${seconds}s`;
+                }
+            }
+            
+            // Function to add log entry
+            function addLogEntry(message, type = 'info') {
+                const logEntry = document.createElement('div');
+                logEntry.className = `scan-item scan-${type}`;
+                logEntry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+                scanLog.appendChild(logEntry);
+                scanLog.scrollTop = scanLog.scrollHeight;
+                logCount.textContent = parseInt(logCount.textContent) + 1;
+            }
+            
+            // Function to scan ports
+            async function scanPorts() {
+                const targetsText = targetsInput.value.trim();
+                const portsText = portsInput.value.trim();
+                
+                if (!targetsText) {
+                    alert('Please enter at least one target');
+                    return;
+                }
+                
+                if (!portsText) {
+                    alert('Please enter ports to scan');
+                    return;
+                }
+                
+                // Parse inputs
+                const targets = targetsText.split('\n')
+                    .map(line => line.trim())
+                    .filter(line => line.length > 0);
+                
+                const ports = parsePorts(portsText);
+                
+                if (targets.length === 0) {
+                    alert('No valid targets found');
+                    return;
+                }
+                
+                if (ports.length === 0) {
+                    alert('No valid ports found');
+                    return;
+                }
+                
+                // Reset state
+                scanController = new AbortController();
+                openPortsOutput.value = '';
+                resultsOutput.value = '';
+                openCount.textContent = '0';
+                scanLog.innerHTML = '';
+                logCount.textContent = '0';
+                totalScans.textContent = (targets.length * ports.length).toString();
+                completedScans.textContent = '0';
+                openPortsCount.textContent = '0';
+                elapsedTime.textContent = '0s';
+                
+                // Show current scan and cancel button
+                currentScan.style.display = 'block';
+                cancelBtn.style.display = 'block';
+                scanBtn.disabled = true;
+                
+                // Start timer
+                scanStartTime = Date.now();
+                timerInterval = setInterval(updateTimer, 1000);
+                
+                const totalScanCount = targets.length * ports.length;
+                let completedScanCount = 0;
+                let openPortsList = [];
+                const results = [];
+                
+                const timeout = parseInt(timeoutInput.value) || 3000;
+                const concurrency = parseInt(concurrencyInput.value) || 3;
+                const useAdvancedScan = advancedScan.checked;
+                
+                addLogEntry(`Starting scan of ${targets.length} targets on ${ports.length} ports each (total: ${totalScanCount})`);
+                addLogEntry(`Using ${concurrency} concurrent scanners with ${timeout}ms timeout`);
+                if (useAdvancedScan) {
+                    addLogEntry('Advanced HTTP detection enabled');
+                }
+                
+                try {
+                    // Process each target
+                    for (let targetIndex = 0; targetIndex < targets.length; targetIndex++) {
+                        const target = targets[targetIndex];
+                        
+                        // Check if scan was cancelled
+                        if (scanController.signal.aborted) {
+                            addLogEntry('Scan cancelled by user', 'failed');
+                            break;
+                        }
+                        
+                        currentTarget.textContent = target;
+                        addLogEntry(`Scanning target: ${target}`);
+                        
+                        // Process ports in chunks for concurrency
+                        for (let portIndex = 0; portIndex < ports.length; portIndex += concurrency) {
+                            const portChunk = ports.slice(portIndex, portIndex + concurrency);
+                            
+                            // Check if scan was cancelled
+                            if (scanController.signal.aborted) break;
+                            
+                            // Scan ports in current chunk concurrently
+                            const chunkPromises = portChunk.map(port => 
+                                scanPort(target, port, timeout, useAdvancedScan, scanController.signal)
+                            );
+                            
+                            const chunkResults = await Promise.all(chunkPromises);
+                            
+                            for (const result of chunkResults) {
+                                completedScanCount++;
+                                completedScans.textContent = completedScanCount.toString();
+                                
+                                const progress = (completedScanCount / totalScanCount) * 100;
+                                progressBar.style.width = `${progress}%`;
+                                progressPercent.textContent = `${Math.round(progress)}%`;
+                                progressStatus.textContent = `Scanning... (${completedScanCount}/${totalScanCount})`;
+                                
+                                if (result.open) {
+                                    openPortsList.push(result);
+                                    openPortsOutput.value += `${result.target}:${result.port} (${result.service}) - ${result.status}\n`;
+                                    openCount.textContent = openPortsList.length;
+                                    openPortsCount.textContent = openPortsList.length;
+                                    addLogEntry(`OPEN: ${result.target}:${result.port} (${result.service}) - ${result.status}`, 'success');
+                                } else {
+                                    addLogEntry(`CLOSED: ${result.target}:${result.port}`, 'skipped');
+                                }
+                                
+                                results.push(result.message);
+                                resultsOutput.value = results.slice(-50).join('\n');
+                                resultsOutput.scrollTop = resultsOutput.scrollHeight;
+                            }
+                            
+                            // Small delay between chunks to avoid overwhelming
+                            await new Promise(resolve => setTimeout(resolve, 200));
+                        }
+                    }
+                    
+                    if (!scanController.signal.aborted) {
+                        addLogEntry(`Scan completed! Found ${openPortsList.length} open ports`, 'success');
+                        progressStatus.textContent = `Scan completed - ${openPortsList.length} open ports found`;
+                    }
+                    
+                } catch (error) {
+                    if (error.name !== 'AbortError') {
+                        addLogEntry(`Scan error: ${error.message}`, 'failed');
+                    }
+                } finally {
+                    // Cleanup
+                    clearInterval(timerInterval);
+                    scanBtn.disabled = false;
+                    cancelBtn.style.display = 'none';
+                    currentScan.style.display = 'none';
+                    scanController = null;
+                }
+            }
+            
+            // Function to scan a single port with multiple methods
+            async function scanPort(target, port, timeout, useAdvancedScan, signal) {
+                return new Promise(async (resolve) => {
+                    // Check if already aborted
+                    if (signal.aborted) {
+                        resolve({
+                            target,
+                            port,
+                            open: false,
+                            service: 'Unknown',
+                            status: 'CANCELLED',
+                            message: `[CANCELLED] ${target}:${port}`
+                        });
+                        return;
+                    }
+                    
+                    const startTime = Date.now();
+                    let result = null;
+                    
+                    // Try multiple scanning methods
+                    if (useAdvancedScan) {
+                        // Method 1: Try fetch with CORS (for HTTP services)
+                        result = await tryFetchWithCors(target, port, timeout, signal);
+                        
+                        // Method 2: If fetch fails, try WebSocket connection
+                        if (!result.open && (port === 80 || port === 443 || port === 8080 || port === 8443)) {
+                            result = await tryWebSocket(target, port, timeout, signal);
+                        }
+                        
+                        // Method 3: If still not open, try Image method as fallback
+                        if (!result.open) {
+                            result = await tryImageMethod(target, port, timeout, signal);
+                        }
+                    } else {
+                        // Simple method: just use Image
+                        result = await tryImageMethod(target, port, timeout, signal);
+                    }
+                    
+                    const responseTime = Date.now() - startTime;
+                    const service = portServices[port] || 'Unknown';
+                    
+                    resolve({
+                        target,
+                        port,
+                        open: result.open,
+                        service,
+                        status: result.status,
+                        responseTime,
+                        message: `[${result.status}] ${target}:${result.port} (${service}) - ${responseTime}ms`
+                    });
+                });
+            }
+            
+            // Method 1: Try fetch with CORS
+            async function tryFetchWithCors(target, port, timeout, signal) {
+                return new Promise((resolve) => {
+                    if (signal.aborted) {
+                        resolve({ open: false, status: 'CANCELLED', port });
+                        return;
+                    }
+                    
+                    const protocol = port === 443 ? 'https' : 'http';
+                    const url = `${protocol}://${target}:${port}/`;
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), timeout);
+                    
+                    fetch(url, {
+                        method: 'GET',
+                        mode: 'cors',
+                        signal: controller.signal
+                    })
+                    .then(response => {
+                        clearTimeout(timeoutId);
+                        // Any HTTP response means the port is open
+                        resolve({ 
+                            open: true, 
+                            status: `HTTP ${response.status}`,
+                            port 
+                        });
+                    })
+                    .catch(error => {
+                        clearTimeout(timeoutId);
+                        if (error.name === 'AbortError') {
+                            resolve({ open: false, status: 'TIMEOUT', port });
+                        } else {
+                            resolve({ open: false, status: 'CLOSED', port });
+                        }
+                    });
+                    
+                    // Handle external abort
+                    signal.addEventListener('abort', () => {
+                        clearTimeout(timeoutId);
+                        controller.abort();
+                    });
+                });
+            }
+            
+            // Method 2: Try WebSocket connection
+            async function tryWebSocket(target, port, timeout, signal) {
+                return new Promise((resolve) => {
+                    if (signal.aborted) {
+                        resolve({ open: false, status: 'CANCELLED', port });
+                        return;
+                    }
+                    
+                    const protocol = port === 443 ? 'wss' : 'ws';
+                    const url = `${protocol}://${target}:${port}/`;
+                    const ws = new WebSocket(url);
+                    const timeoutId = setTimeout(() => {
+                        ws.close();
+                        resolve({ open: false, status: 'TIMEOUT', port });
+                    }, timeout);
+                    
+                    ws.onopen = () => {
+                        clearTimeout(timeoutId);
+                        ws.close();
+                        resolve({ open: true, status: 'WebSocket OPEN', port });
+                    };
+                    
+                    ws.onerror = () => {
+                        clearTimeout(timeoutId);
+                        resolve({ open: false, status: 'CLOSED', port });
+                    };
+                    
+                    // Handle external abort
+                    signal.addEventListener('abort', () => {
+                        clearTimeout(timeoutId);
+                        ws.close();
+                    });
+                });
+            }
+            
+            // Method 3: Traditional Image method (fallback)
+            async function tryImageMethod(target, port, timeout, signal) {
+                return new Promise((resolve) => {
+                    if (signal.aborted) {
+                        resolve({ open: false, status: 'CANCELLED', port });
+                        return;
+                    }
+                    
+                    const startTime = Date.now();
+                    const img = new Image();
+                    let resolved = false;
+                    
+                    const finish = (open, status) => {
+                        if (resolved) return;
+                        resolved = true;
+                        resolve({ open, status, port });
+                    };
+                    
+                    // Try connecting via Image
+                    img.onload = () => finish(true, 'HTTP 200');
+                    img.onerror = () => {
+                        // Even if we get an error, the server responded (port is open)
+                        // We got a 404 but the port is still open!
+                        finish(true, 'HTTP 404/Error');
+                    };
+                    
+                    const protocol = port === 443 ? 'https' : 'http';
+                    img.src = `${protocol}://${target}:${port}/favicon.ico?t=${Date.now()}`;
+                    
+                    // Timeout fallback
+                    setTimeout(() => {
+                        finish(false, 'TIMEOUT');
+                    }, timeout);
+                    
+                    // Abort handling
+                    signal.addEventListener('abort', () => {
+                        finish(false, 'CANCELLED');
+                    });
+                });
+            }
+            
+            // Event listener for scan button
+            scanBtn.addEventListener('click', scanPorts);
+            
+            // Event listener for cancel button
+            cancelBtn.addEventListener('click', function() {
+                if (scanController) {
+                    scanController.abort();
+                    addLogEntry('Cancelling scan...', 'failed');
+                }
+            });
+            
+            // Event listener for clear button
+            clearBtn.addEventListener('click', function() {
+                if (scanController) {
+                    scanController.abort();
+                }
+                
+                targetsInput.value = '';
+                openPortsOutput.value = '';
+                resultsOutput.value = '';
+                openCount.textContent = '0';
+                scanLog.innerHTML = '';
+                logCount.textContent = '0';
+                progressBar.style.width = '0%';
+                progressStatus.textContent = 'Ready to scan';
+                progressPercent.textContent = '0%';
+                totalScans.textContent = '0';
+                completedScans.textContent = '0';
+                openPortsCount.textContent = '0';
+                elapsedTime.textContent = '0s';
+                currentScan.style.display = 'none';
+                
+                if (timerInterval) {
+                    clearInterval(timerInterval);
+                    timerInterval = null;
+                }
+            });
+        });
+    </script>
+</body>
+</html>
